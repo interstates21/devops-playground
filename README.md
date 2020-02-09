@@ -106,4 +106,13 @@ ssh-keygen -t rsa
 PermitRootLogin no
 PasswordAuthentication no
 ```
--
+### You have to set the rules of your firewall on your server only with the services used outside the VM.
+https://www.digitalocean.com/community/tutorials/how-to-set-up-a-firewall-with-ufw-on-debian-9
+```
+sudo apt-get install ufw
+sudo ufw enable
+sudo ufw allow [your ssh port]/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443
+```
+
