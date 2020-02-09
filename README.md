@@ -213,7 +213,7 @@ sudo crontab -e
 
 ```
 
-###Make a script to monitor changes of the /etc/crontab file and sends an email to root if it has been modified. Create a scheduled script task every day at midnight.
+### Make a script to monitor changes of the /etc/crontab file and sends an email to root if it has been modified. Create a scheduled script task every day at midnight.
 ```
   touch monitor.sh
   chmod 777 monitor.sh
@@ -273,4 +273,59 @@ set spoolfile="/root/mail"
   mutt
   q
   echo "Text" | sudo mail -s "Subject" root@debian.lan
+```
+
+### 
+
+- copy a file to remote server
+```
+scp -P [Port] [file] user@[remote ip]:[path on server]
+```
+
+- create ssl 
+```
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/apache-selfsigned.key -out /etc/ssl/certs/apache-selfsigned.crt
+```
+
+```
+sudo nano /etc/apache2/conf-available/ssl-params.conf 
+>>>
+SSLCipherSuite EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH
+SSLProtocol All -SSLv2 -SSLv3
+SSLHonorCipherOrder On
+
+Header always set X-Frame-Options DENY
+Header always set X-Content-Type-Options nosniff
+
+SSLCompression off
+SSLSessionTickets Off
+SSLUseStapling on
+SSLStaplingCache "shmcb:logs/stapling-cache(150000)"
+```
+
+```
+sudo nano /etc/apache2/sites-available/default-ssl.conf
+>>>
+....	
+		ServerAdmin root@localhost
+		ServerName [your debian ip]
+		DocumentRoot /var/www/html
+		SSLCertificateFile	/etc/ssl/certs/apache-selfsigned.crt
+		SSLCertificateKeyFile /etc/ssl/private/apache-selfsigned.key
+....
+
+```
+```
+sudo nano /etc/apache2/sites-available/000-default.conf 
+>>> 
+Redirect "/" "https://[your debian ip]/"
+```
+
+```
+sudo a2enmod ssl
+sudo a2enmod headers
+sudo a2ensite default-ssl
+sudo a2enconf ssl-params
+sudo apache2ctl configtest
+sudo systemctl restart apache2
 ```
