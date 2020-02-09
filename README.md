@@ -115,4 +115,51 @@ sudo ufw allow [your ssh port]/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443
 ```
+### You have to set a DOS (Denial Of Service Attack) protection on your open ports of your VM.
 
+```
+sudo apt-get install iptables fail2ban apache2
+sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+```
+- Add those rules to jail.local to protect all port 80 attack. SSH is protected by default
+*
+[http-get-dos]
+enabled = true
+port = http,https
+filter = http-get-dos
+logpath = %(apache_error_log)s
+maxretry = 300
+findtime = 300
+#ban for 5 minutes
+bantime = 600
+action = iptables[name=HTTP, port=http, protocol=tcp]
+*
+
+- Add the following file
+```
+cat /etc/fail2ban/filter.d/http-get-dos.conf
+# Fail2Ban configuration file
+#
+# Author: http://www.go2linux.org
+#
+[Definition]
+
+# Option: failregex
+# Note: This regex will match any GET entry in your logs, so basically all valid and not valid entries are a match.
+# You should set up in the jail.conf file, the maxretry and findtime carefully in order to avoid false positives.
+
+failregex = ^ -.*GET
+
+# Option: ignoreregex
+# Notes.: regex to ignore. If this regex matches, the line is ignored.
+# Values: TEXT
+#
+ignoreregex =
+```
+
+```
+ sudo ufw reload
+ sudo service fail2ban restart
+ // check 
+ sudo fail2ban-client status
+```
