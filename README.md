@@ -18,6 +18,7 @@
 --- Choose manual Partition method.
 --- Create one 4.2GB Ext4 for '/'
 --- Probably create 3GB Ext4 for '/home'
+--- Check ssh services for installation
 --- The rest - swap area
 --- Don't install any GUI
 --- Install GRUB as prompted
@@ -73,9 +74,36 @@ iface enp0s8 inet static
 #the primary network interfaces
 auto enp0s3
 auto enp0s8
-``` so that the interfaces reads from the separate files from interfaces_d/ folder
+```
+so that the interfaces reads from the separate files from interfaces_d/ folder
 
 ```
 sudo service networking restart
 ```
-- check with sudo ifconfig
+- check with
+```
+sudo ifconfig
+```
+### You have to change the default port of the SSH service by the one of your choice. SSH access HAS TO be done with publickeys. SSH root access SHOULD NOT be allowed directly, but with a user who can be root.
+
+- Edit /etc/ssh/sshd_config . 
+- Uncomment #Port 22 and change it to whatever port you like
+
+```
+sudo service sshd restart
+```
+- You could try ssh on your Host computer
+```
+sudo ssh [username]@[ip address of your enp0s8 on server] -p [the port you've entered to sshd_config]
+```
+- Generate ssh on your Host computer
+```
+ssh-keygen -t rsa
+```
+- check this to add the ssh public keys to your Debian machine in order to let the Host connect without a password https://www.youtube.com/watch?v=hQWRp-FdTpc
+- when you've done with the keys - disable root and password connections in /sshd_config
+```
+PermitRootLogin no
+PasswordAuthentication no
+```
+-
