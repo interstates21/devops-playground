@@ -163,3 +163,114 @@ ignoreregex =
  // check 
  sudo fail2ban-client status
 ```
+
+### You have to set a protection against scans on your VM’s open ports. 
+```
+sudo apt-get install portsentry
+```
+- in /etc/default/portsentry:
+```
+TCP_MODE="atcp"
+UDP_MODE="audp"
+```
+
+- in /etc/portsentry/portsentry.conf
+```
+BLOCK_UDP="1"
+BLOCK_TCP="1"
+...
+comment - KILL_ROUTE="/sbin/route add -host $TARGET$ reject"
+uncomment - KILL_ROUTE="/sbin/iptables -I INPUT -s $TARGET$ -j DROP"
+```
+
+```
+sudo /etc/init.d/portsentry start
+```
+logs >>  /var/log/syslog file.
+
+### Stop the services you don’t need for this project.
+- find
+```
+ ls /etc/init.d
+```
+- disable
+```
+sudo systemctl disable [servicename].service
+```
+
+### Create a script that updates all the sources of package, then your packages and which logs the whole in a file named /var/log/update_script.log. Create a scheduled task for this script once a week at 4AM and every time the machine reboots.
+
+```
+touch [name].sh
+chmod 777 [name].sh
+echo "sudo apt-get update -y >> /var/log/update_script.log" >> [name].sh 
+echo "sudo apt-get upgrade -y >> /var/log/update_script.log" >> [name].sh 
+
+sudo crontab -e
+
+>>> 
+0 4 * * MON /home/[user]/[anything].sh
+
+```
+
+###Make a script to monitor changes of the /etc/crontab file and sends an email to root if it has been modified. Create a scheduled script task every day at midnight.
+```
+  touch monitor.sh
+  chmod 777 monitor.sh
+```
+ 
+ ```
+ root@ghostsys:/home/ghost# cat monitor.sh 
+sudo touch /home/ghost/cron_md5
+sudo chmod 777 /home/ghost/cron_md5
+m1="$(md5sum '/etc/crontab' | awk '{print $1}')"
+m2="$(cat '/home/ghost/cron_md5')"
+
+if [ "$m1" != "$m2" ] ; then
+	md5sum /etc/crontab | awk '{print $1}' > /home/ghost/cron_md5
+	echo "KO" | mail -s "Cronfile was changed" root@debian.lan
+fi
+```
+
+```
+sudo crontab -e
+>>>
+* * * * * /home/ghost/monitor.sh
+```
+
+### Mails
+```
+sudo apt install bsd-mailx
+sudo apt install postfix
+>> Local only
+>> debian.lan
+
+```
+```
+sudo nano /etc/aliases 
+>>> 
+...
+root:root
+```
+
+```
+sudo newaliases
+sudo postconf -e "home_mailbox = mail/"
+sudo service postfix restart
+sudo apt install mutt
+sudo nano /root/.muttrc
+>>
+set mbox_type=Maildir
+set folder="/root/mail"
+set mask="!^\\.[^.]"
+set mbox="/root/mail"
+set record="+.Sent"
+set postponed="+.Drafts"
+set spoolfile="/root/mail"
+```
+
+```
+  mutt
+  q
+  echo "Text" | sudo mail -s "Subject" root@debian.lan
+```
